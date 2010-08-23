@@ -1,0 +1,256 @@
+<?php
+
+/**
+ * Implementation of hook_perm().
+ */
+function od_share_perm() {
+  return array(
+    'administer od_share',
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function od_share_menu() {
+  $items['admin/settings/od_share'] = array(
+    'title' => t('OD Share'),
+    'page callback' => 'od_share_list',
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'od_share.admin.inc',
+  );
+  $items['admin/settings/od_share/list'] = array(
+    'title' => t('List'),
+    'page callback' => 'od_share_list',
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'od_share.admin.inc',
+    'weight' => -1,
+  );
+  $items['admin/settings/od_share/ctypes'] = array(
+    'title' => t('Content types'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('od_share_ctypes'),
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'od_share.admin.inc',
+    'weight' => 1,
+  );
+  $items['admin/settings/od_share/global'] = array(
+    'title' => t('Global'),
+    'page callback' => 'od_share_global',
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'od_share.admin.inc',
+    'weight' => 2,
+  );
+  $items['admin/settings/od_share/custom'] = array(
+    'title' => t('Custom'),
+    'page callback' => 'od_share_custom',
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'od_share.admin.inc',
+    'weight' => 3,
+  );
+  $items['admin/settings/od_share/%'] = array(
+    'title' => t('Type'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('od_share_edit', 3),
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_CALLBACK,
+    'file' => 'od_share.admin.inc',
+  );
+  $items['admin/settings/od_share/%/remove'] = array(
+    'title' => t('Confirm'),
+    'page callback' => 'od_share_remove_confirm',
+    'page arguments' => array(3),
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_CALLBACK,
+    'file' => 'od_share.admin.inc',
+  );
+  $items['od_share/save/%'] = array(
+    'title' => t('Save'),
+    'page callback' => 'od_share_save',
+    'page arguments' => array(2),
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_CALLBACK,
+    'file' => 'od_share.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function od_share_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  // Check
+  // 1. Is this content type enabled?
+  // 2. If this content type is enabled, display position is node?
+  if (in_array($node->type, variable_get('od_share_enabled', array())) && variable_get('od_share_type_'. $node->type .'_position', 'link') == 'node') {
+    // Node view.
+    if ($op == 'view') {
+      $items = array();
+      // Get plugins for this node type.
+      $info = od_share_get_type_info($node->type);
+      foreach ($info as $plugin) {
+        // Skip if plugin is disabled.
+        if ($plugin['enabled'] == 0) continue;
+        $plugin_info = od_share_plugins_info($plugin['plugin']);
+        $vars = array(
+          'option' => $plugin['options'],
+          'url' => $GLOBALS['base_url'] .'/node/'. $node->nid,
+          'title' => $node->title,
+        );
+        $items[] = array(
+          'output' => $plugin_info['display callback']($vars),
+          'plugin_info' => $plugin_info,
+        );
+      }
+      
+      if ($items) {
+        $output = '<ul class="od_share">';
+        foreach ($items as $item) {
+          $output .= '<li class="'. $item['plugin_info']['plugin'] .'">';
+          $output .= $item['output'];
+          $output .= '</li>';
+        }
+        $output .= '</ul>';
+      }
+      
+      if (!empty($output)) {
+        $node->content['od_share'] = array(
+          '#value' => $output,
+          '#weight' => variable_get('od_share_type_'. $node->type .'_weight', '0'),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_links().
+ */
+function od_share_link($type, $object, $teaser = FALSE) {
+  // Check
+  // 1. Is this content type enabled?
+  // 2. If this content type is enabled, display position is link?
+  if (in_array($object->type, variable_get('od_share_enabled', array())) && variable_get('od_share_type_'. $object->type .'_position', 'link') == 'link') {
+    // Is node link and not a teaser.
+    if ($type == 'node' && !$teaser) {
+      $links = array();
+      // Get plugins for this node type.
+      $info = od_share_get_type_info($object->type);
+      foreach ($info as $plugin) {
+        // Skip if plugin is disabled.
+        if ($plugin['enabled'] == 0) continue;
+        $plugin_info = od_share_plugins_info($plugin['plugin']);
+        $vars = array(
+          'option' => $plugin['options'],
+          'url' => $GLOBALS['base_url'] .'/node/'. $object->nid,
+          'title' => $object->title,
+        );
+        $output = $plugin_info['display callback']($vars);
+        $links[$plugin['plugin']] = array(
+          'title' => $output,
+          'html' => TRUE,
+        );
+      }
+      return $links;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function od_share_theme() {
+  return array(
+    'od_share_edit' => array(
+      'arguments' => array('form' => array()),
+    ),
+  );
+}
+
+/**
+ * Theme od_share_edit_plugins.
+ */
+function theme_od_share_edit($form) {
+  $rows = array();
+  foreach (element_children($form['od_share']) as $key) {
+    $row = array();
+    $row[] = drupal_render($form['od_share'][$key]['name']) . drupal_render($form['od_share'][$key]['plugin']);
+    $form['od_share'][$key]['weight']['#attributes']['class'] = 'plugins-weight';
+    $row[] = drupal_render($form['od_share'][$key]['weight']);
+    $row[] = drupal_render($form['od_share'][$key]['options']);
+    $row[] = drupal_render($form['od_share'][$key]['enabled']);
+    $class = 'draggable';
+    if (!$form['od_share'][$key]['enabled']['#default_value']) {
+      $class .= ' disabled';
+    }
+    $rows[] = array(
+      'data' => $row,
+      'class' => $class,
+    );
+  }
+  if (count($rows) == 0) {
+    $rows[] = array(
+      array(
+        'data' => t('No plugins.'),
+        'colspan' => 4,
+      ),
+    );
+  }
+  $headers = array(
+    t('Plugin name'), 
+    t('Weight'), 
+    t('Options'),
+    t('Enabled'),
+  );
+  $output = theme('table', $headers, $rows, array('id' => 'plugins-edit-table'));
+  $output .= drupal_render($form);
+  drupal_add_tabledrag('plugins-edit-table', 'order', 'self', 'plugins-weight');
+  return $output;
+}
+
+/**
+ * Return plugins in array.
+ */
+function od_share_get_plugins($plugin = NULL) {
+  $plugins = array();
+  if ($plugin) {
+    return od_share_plugins_info($plugin);
+  }
+  else {
+    foreach (glob(drupal_get_path('module', 'od_share') .'/plugins/od_share.*.inc') as $filepath) {
+      $filename = basename($filepath, '.inc');
+      $plugin = drupal_substr($filename, drupal_strlen('od_share.'));
+      $info = od_share_plugins_info($plugin);
+      if ($info) {
+        $plugins[] = $info;
+      }
+    }
+  }
+  return $plugins;
+}
+
+/**
+ * Get plugins info.
+ */
+function od_share_plugins_info($plugin) {
+  require_once 'plugins/od_share.'. $plugin .'.inc';
+  $func = 'od_share_'. $plugin .'_info';
+  $info = array();
+  if (function_exists($func)) {
+    $info = $func();
+    $info['plugin'] = $plugin;
+  }
+  return $info;
+}
+
+/**
+ * Get type info.
+ */
+function od_share_get_type_info($type) {
+  return variable_get('od_share_type_'.$type, array());
+}
