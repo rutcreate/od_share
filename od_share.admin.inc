@@ -24,7 +24,7 @@ function od_share_list() {
     $output = theme('table', $headers, $rows);
   }
   else {
-    $output = 'no output';
+    $output = t('No content type selected. Please choose content type <a href="!link">here</a>', array('!link' => url('admin/settings/od_share/ctypes')));
   }
   return $output;
 }
@@ -126,7 +126,7 @@ function od_share_edit(&$form_state, $type) {
     '#title' => t('Weight position'),
     '#description' => t('If above you select Content by weight, you need to enter weight.'),
     '#default_value' => variable_get('od_share_type_'. $type .'_weight', '0'),
-    '#size' => 1,
+    '#size' => 5,
   );
   $form['type'] = array(
     '#type' => 'hidden',

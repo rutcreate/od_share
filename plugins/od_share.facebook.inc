@@ -5,7 +5,7 @@
  */
 function od_share_facebook_info() {
   return array(
-    'name' => t('Facebook'),
+    'name' => t('Facebook Share'),
     'display callback' => 'od_share_facebook_display',
     'options callback' => 'od_share_facebook_options',
   );
@@ -27,10 +27,10 @@ function od_share_facebook_display($vars) {
  */
 function od_share_facebook_options() {
   return array(
-    'box_count' => 'box_count',
-    'button_count' => 'button_count',
-    'button' => 'button',
-    'icon_link' => 'icon_link',
-    'icon' => 'icon',
+    'box_count' => t('Box Count'),
+    'button_count' => t('Button Count'),
+    'button' => t('Button'),
+    'icon_link' => t('Icon Link'),
+    'link' => t('Link'),
   );
 }
