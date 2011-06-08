@@ -210,7 +210,6 @@ function od_share_remove_confirm($form_state, $type) {
     t('Remove'),
     t('Cancel')
   );
-  drupal_set_message('<pre>'. print_r(variable_get('od_share_enabled', array()), 1) .'</pre>');
   return $form;
 }
 
