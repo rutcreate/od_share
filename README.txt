@@ -24,6 +24,6 @@ CONFIGURATION
     This is where all the module-specific configuration options can be set.
   
 - To display buttons, you have to add php code to node.tpl.php in your template folder:
-<?php if ($share): ?>
-  <div class="node-share"><?php print $share; ?></div>
+<?php if ($od_share): ?>
+  <div class="node-share"><?php print $od_share; ?></div>
 <?php endif; ?>

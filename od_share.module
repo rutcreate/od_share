@@ -183,6 +183,13 @@ function theme_od_share_edit($form) {
 }
 
 /**
+ * Template preprocess node.
+ */
+function od_share_preprocess_node(&$variables) {
+  $variables['od_share'] = od_share_get_buttons($variables['node']);
+}
+
+/**
  * Return plugins in array.
  */
 function od_share_get_plugins($plugin = NULL) {
