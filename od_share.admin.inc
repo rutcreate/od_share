@@ -179,8 +179,54 @@ function od_share_edit_submit($form, $form_state) {
   drupal_set_message('The configuration options have been saved.');
 }
 
+/**
+ * Remove setting form.
+ */
+function od_share_remove_confirm($form_state, $type) {
+  $name = node_get_types('name', $type);
+  $destination = isset($_GET['destination']) ? $_GET['destination'] : 'admin/settings/od_share';
 
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => $type,
+  );
+  $form['name'] = array(
+    '#type' => 'value',
+    '#value' => $name,
+  );
+  $form['#submit'] = array('od_share_remove_confirm_submit');
 
+  $form = confirm_form($form,
+    t('Are you sure you want to remove %name setting?', array('%name' => $name)),
+    $destination,
+    t('This action cannot be undone.'),
+    t('Remove'),
+    t('Cancel')
+  );
+  drupal_set_message('<pre>'. print_r(variable_get('od_share_enabled', array()), 1) .'</pre>');
+  return $form;
+}
+
+/**
+ * Remove settings form submit.
+ */
+function od_share_remove_confirm_submit($form, &$form_state) {
+  $type = $form_state['values']['type'];
+  $name = $form_state['values']['type'];
+
+  // delete variables.
+  variable_del('od_share_type_'. $type);
+  variable_del('od_share_type_'. $type .'_position');
+  variable_del('od_share_type_'. $type .'_weight');
+  // edit enabled settings.
+  $types = variable_get('od_share_enabled', array());
+  unset($types[$type]);
+  variable_set('od_share_enabled', $types);
+
+  drupal_set_message('The %name configuration options have been removed.', array('%name' => $name));
+
+  $form_state['redirect'] = isset($_GET['destination']) ? $_GET['destination'] : 'admin/settings/od_share';
+}
 
 
 

@@ -63,8 +63,8 @@ function od_share_menu() {
   );
   $items['admin/settings/od_share/%/remove'] = array(
     'title' => t('Confirm'),
-    'page callback' => 'od_share_remove_confirm',
-    'page arguments' => array(3),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('od_share_remove_confirm', 3),
     'access arguments' => array('administer od_share'),
     'type' => MENU_CALLBACK,
     'file' => 'od_share.admin.inc',
