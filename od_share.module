@@ -90,9 +90,7 @@ function od_share_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   if (in_array($node->type, variable_get('od_share_enabled', array())) && variable_get('od_share_type_'. $node->type .'_position', 'link') == 'node') {
     // Node view.
     if ($op == 'view') {
-
       $output = od_share_get_buttons($node);
-      
       if (!empty($output)) {
         drupal_add_css(drupal_get_path('module', 'od_share') .'/css/od_share.css');
         $node->content['od_share'] = array(
