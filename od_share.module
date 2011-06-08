@@ -90,33 +90,8 @@ function od_share_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   if (in_array($node->type, variable_get('od_share_enabled', array())) && variable_get('od_share_type_'. $node->type .'_position', 'link') == 'node') {
     // Node view.
     if ($op == 'view') {
-      $items = array();
-      // Get plugins for this node type.
-      $info = od_share_get_type_info($node->type);
-      foreach ($info as $plugin) {
-        // Skip if plugin is disabled.
-        if ($plugin['enabled'] == 0) continue;
-        $plugin_info = od_share_plugins_info($plugin['plugin']);
-        $vars = array(
-          'option' => $plugin['options'],
-          'url' => $GLOBALS['base_url'] .'/node/'. $node->nid,
-          'title' => $node->title,
-        );
-        $items[] = array(
-          'output' => $plugin_info['display callback']($vars),
-          'plugin_info' => $plugin_info,
-        );
-      }
-      
-      if ($items) {
-        $output = '<ul class="od_share">';
-        foreach ($items as $item) {
-          $output .= '<li class="'. $item['plugin_info']['plugin'] .'">';
-          $output .= $item['output'];
-          $output .= '</li>';
-        }
-        $output .= '</ul>';
-      }
+
+      $output = od_share_get_buttons($node);
       
       if (!empty($output)) {
         drupal_add_css(drupal_get_path('module', 'od_share') .'/css/od_share.css');
@@ -140,21 +115,11 @@ function od_share_link($type, $object, $teaser = FALSE) {
     // Is node link and not a teaser.
     if ($type == 'node' && !$teaser) {
       drupal_add_css(drupal_get_path('module', 'od_share') .'/css/od_share.css');
+      $items = od_share_get_buttons($object, TRUE);
       $links = array();
-      // Get plugins for this node type.
-      $info = od_share_get_type_info($object->type);
-      foreach ($info as $plugin) {
-        // Skip if plugin is disabled.
-        if ($plugin['enabled'] == 0) continue;
-        $plugin_info = od_share_plugins_info($plugin['plugin']);
-        $vars = array(
-          'option' => $plugin['options'],
-          'url' => $GLOBALS['base_url'] .'/node/'. $object->nid,
-          'title' => $object->title,
-        );
-        $output = $plugin_info['display callback']($vars);
-        $links[$plugin['plugin']] = array(
-          'title' => $output,
+      foreach ($items as $item) {
+        $links[$item['plugin_info']['plugin']] = array(
+          'title' => $item['output'],
           'html' => TRUE,
         );
       }
@@ -184,6 +149,7 @@ function theme_od_share_edit($form) {
     $row[] = drupal_render($form['od_share'][$key]['name']) . drupal_render($form['od_share'][$key]['plugin']);
     $form['od_share'][$key]['weight']['#attributes']['class'] = 'plugins-weight';
     $row[] = drupal_render($form['od_share'][$key]['weight']);
+    $row[] = drupal_render($form['od_share'][$key]['description']);
     $row[] = drupal_render($form['od_share'][$key]['options']);
     $row[] = drupal_render($form['od_share'][$key]['enabled']);
     $class = 'draggable';
@@ -206,6 +172,7 @@ function theme_od_share_edit($form) {
   $headers = array(
     t('Plugin name'), 
     t('Weight'), 
+    t('Description'),
     t('Options'),
     t('Enabled'),
   );
@@ -256,3 +223,52 @@ function od_share_plugins_info($plugin) {
 function od_share_get_type_info($type) {
   return variable_get('od_share_type_'.$type, array());
 }
+
+/**
+ * Get share buttons.
+ */
+function od_share_get_buttons($node, $raw = FALSE) {
+  $items = array();
+  $info = od_share_get_type_info($node->type);
+  foreach ($info as $plugin) {
+    // Skip if plugin is disabled.
+    if ($plugin['enabled'] == 0) continue;
+    $plugin_info = od_share_plugins_info($plugin['plugin']);
+    $vars = array(
+      'option' => $plugin['options'],
+      'url' => $GLOBALS['base_url'] .'/node/'. $node->nid,
+      'title' => $node->title,
+    );
+    $items[] = array(
+      'output' => $plugin_info['display callback']($vars),
+      'plugin_info' => $plugin_info,
+    );
+  }
+
+  if ($raw) {
+    return $items;
+  }
+  
+  if ($items) {
+    $output = '<ul class="od_share">';
+    foreach ($items as $item) {
+      $output .= '<li class="'. $item['plugin_info']['plugin'] .'">';
+      $output .= $item['output'];
+      $output .= '</li>';
+    }
+    $output .= '</ul>';
+  }
+
+  return $output;
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function od_share_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'od_share') .'/views',
+  );
+}
+

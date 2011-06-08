@@ -66,15 +66,18 @@ function od_share_ctypes_submit($form, $form_state) {
 /**
  * Edit plugins.
  */
-function od_share_edit(&$form_state, $type) {
+function od_share_edit(&$form_state, $type = NULL, $view_use = FALSE) {
   // Check enabled content type.
-  if (!in_array($type, variable_get('od_share_enabled', array()))) {
+  $enabled = variable_get('od_share_enabled', array());
+  if (!in_array($type, $enabled) && !$view_use) {
     drupal_not_found();
     exit();
   }
   // Set title.
-  $name = node_get_types('name', array('type' => $type));
-  drupal_set_title('Share button for '. $name);
+  if (!$view_use) {
+    $name = node_get_types('name', array('type' => $type));
+    drupal_set_title('Share button for '. $name);
+  }
   
   // Generate form.
   $form['od_share']['#tree'] = TRUE;
@@ -82,7 +85,7 @@ function od_share_edit(&$form_state, $type) {
   // Get settings.
   if ($_info = od_share_get_type_info($type)) {
     $info = array();
-    // Re-structure.
+    // Re-weight.
     $max_weight = -999;
     foreach ($_info as $i) {
       $info[$i['plugin']] = $i;
@@ -147,6 +150,10 @@ function od_share_edit_fields($weight, $plugin) {
   $form['name'] = array(
     '#type' => 'markup',
     '#value' => $plugin['name'],
+  );
+  $form['description'] = array(
+    '#type' => 'markup',
+    '#value' => $plugin['description'],
   );
   $form['plugin'] = array(
     '#type' => 'hidden',
@@ -227,20 +234,3 @@ function od_share_remove_confirm_submit($form, &$form_state) {
 
   $form_state['redirect'] = isset($_GET['destination']) ? $_GET['destination'] : 'admin/settings/od_share';
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,0 +1,5 @@
+INSTALLATION
+------------
+
+Enable the print module: Administer > Site building > Modules
+  (admin/build/modules)
