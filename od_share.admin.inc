@@ -9,7 +9,7 @@ function od_share_list() {
     t('Edit'),
     t('Remove'),
   );
-  
+
   $enabled = variable_get('od_share_enabled', array());
   $rows = array();
   foreach ($enabled as $type) {
@@ -34,10 +34,10 @@ function od_share_list() {
  */
 function od_share_ctypes() {
   // Options.
-  $types = node_get_types();
+  $types = node_get_types('names');
   $options = array();
-  foreach ($types as $type) {
-    $options[$type->type] = $type->name;
+  foreach ($types as $type => $name) {
+    $options[$type] = $name;
   }
   // Form.
   $form['od_share_ctypes'] = array(
@@ -78,7 +78,7 @@ function od_share_edit(&$form_state, $type = NULL, $view_use = FALSE) {
     $name = node_get_types('name', array('type' => $type));
     drupal_set_title('Share button for '. $name);
   }
-  
+
   // Generate form.
   $form['od_share']['#tree'] = TRUE;
   $plugins = od_share_get_plugins();
@@ -96,10 +96,10 @@ function od_share_edit(&$form_state, $type = NULL, $view_use = FALSE) {
     foreach ($plugins as $plugin) {
       // Make form.
       if ($i = $info[$plugin['plugin']]) {
-        
+
         $plugin['enabled'] = $i['enabled'];
         $plugin['option_value'] = $i['options'];
-        
+
         $form['od_share'][$i['weight']] = od_share_edit_fields($i['weight'], $plugin);
       }
       else {
@@ -169,8 +169,8 @@ function od_share_edit_fields($weight, $plugin) {
     '#default_value' => $plugin['enabled'] ? $plugin['enabled'] : 0,
   );
   $form['weight'] = array(
-  	'#type' => 'weight',
-  	'#default_value' => $weight,
+    '#type' => 'weight',
+    '#default_value' => $weight,
   );
   return $form;
 }
