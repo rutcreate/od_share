@@ -26,6 +26,13 @@ function od_share_tweetmeme_display($vars) {
     $width = 50;
     $height = 61;
   }
+
+  $use_path_alias = variable_get('od_share_use_path_alias', FALSE);
+  if ($use_path_alias) {
+    $path_alias = drupal_get_path_alias($_GET['q']);
+    $url = url($path_alias, array('absolute' => TRUE));
+  }
+
   $output = '<iframe scrolling="no" width="'. $width .'" height="'. $height .'" frameborder="0" src="http://api.tweetmeme.com/button.js?url='. $url .'&style='. $option .'"></iframe>';
   return $output;
 }

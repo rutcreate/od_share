@@ -44,11 +44,23 @@ function od_share_ctypes() {
     '#default_value' => variable_get('od_share_enabled', array()),
     '#options' => $options,
   );
+  $form['od_share_config'] = array(
+    '#type'  => 'fieldset',
+    '#collapsible' => TRUE,
+    '#title' => t('OD Share global configuration settings'),
+    '#tree'  => TRUE,
+  );
+  $form['od_share_config']['use_path_alias'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use path alias in stead of normal path.'),
+    '#description' => t('Use drupal_get_path_alias instead.'),
+    '#default_value' => variable_get('od_share_use_path_alias', FALSE),
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
   );
-  $form['#redirect'] = 'admin/settings/od_share';
+  //$form['#redirect'] = 'admin/settings/od_share';
   return $form;
 }
 
@@ -57,7 +69,9 @@ function od_share_ctypes() {
  */
 function od_share_ctypes_submit($form, $form_state) {
   $ctypes = array_filter($form_state['values']['od_share_ctypes']);
+  $use_path_alias_status = $form_state['values']['od_share_config']['use_path_alias'];
   variable_set('od_share_enabled', $ctypes);
+  variable_set('od_share_use_path_alias', $use_path_alias_status);
 }
 
 /**
