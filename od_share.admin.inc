@@ -34,11 +34,8 @@ function od_share_list() {
  */
 function od_share_ctypes() {
   // Options.
-  $types = node_get_types('names');
-  $options = array();
-  foreach ($types as $type => $name) {
-    $options[$type] = $name;
-  }
+  $options = node_get_types('names');
+
   // Form.
   $form['od_share_ctypes'] = array(
     '#type' => 'checkboxes',
