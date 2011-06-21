@@ -19,18 +19,9 @@ function od_share_facebook_display($vars) {
     $$key = $value;
   }
 
-  $use_path_alias = variable_get('od_share_use_path_alias', FALSE);
-  if ($use_path_alias) {
-    $path_alias = drupal_get_path_alias($_GET['q']);
-    $url = url($path_alias, array('absolute' => TRUE));
-  }
+  $url = url_to_use($url);
 
-
-  $use_xfbml = variable_get('od_share_facebook_use_xfbml', TRUE);
-  $app_id = variable_get('od_share_facebook_app_id', 'undefined');
-
-  if ($use_xfbml) {
-
+  if (is_use_xfbml()) {
     $output .= '<fb:share-button href="'. $url .'" type="'. $option .'"> </fb:share-button>';
   }
   else {

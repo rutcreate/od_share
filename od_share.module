@@ -297,3 +297,26 @@ function od_share_views_api() {
   );
 }
 
+
+/**
+  * Helper functions.
+  */
+function is_use_xfbml() {
+  $use_xfbml = variable_get('od_share_facebook_use_xfbml', TRUE);
+  $app_id = variable_get('od_share_facebook_app_id', 'undefined');
+  return ($use_xfbml && $app_id != 'undefined');
+}
+
+/**
+  * Helper functions.
+  */
+function url_to_use($url) {
+  $use_path_alias = variable_get('od_share_use_path_alias', FALSE);
+
+  if ($use_path_alias) {
+    $path_alias = drupal_get_path_alias($_GET['q']);
+    $url = url($path_alias, array('absolute' => TRUE));
+  }
+
+  return $url;
+}
