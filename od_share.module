@@ -53,6 +53,15 @@ function od_share_menu() {
     'file' => 'od_share.admin.inc',
     'weight' => 3,
   );
+  $items['admin/settings/od_share/facebookapp'] = array(
+    'title' => t('Facebook Application Settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('od_share_facebook_app_settings'),
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'od_share.admin.inc',
+    'weight' => 4
+  );
   $items['admin/settings/od_share/%'] = array(
     'title' => t('Type'),
     'page callback' => 'drupal_get_form',
@@ -106,6 +115,7 @@ function od_share_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * Implementation of hook_links().
  */
 function od_share_link($type, $object, $teaser = FALSE) {
+  $fb_js_sdk_is_included = FALSE;
   // Check
   // 1. Is this content type enabled?
   // 2. If this content type is enabled, display position is link?
@@ -116,6 +126,16 @@ function od_share_link($type, $object, $teaser = FALSE) {
       $items = od_share_get_buttons($object, TRUE);
       $links = array();
       foreach ($items as $item) {
+        $is_facebook = strpos($item['plugin_info']['plugin'], 'facebook_');
+        if ($is_facebook !== false && $fb_js_sdk_is_included == FALSE) {
+          $use_xfbml = variable_get('od_share_facebook_use_xfbml', TRUE);
+          $app_id = variable_get('od_share_facebook_app_id', 'undefined');
+          if ($use_xfbml && $app_id != 'undefined') {
+            $output = '<div id="fb-root"></div><script src="http://connect.facebook.net/en_US/all.js#appId='.$app_id.'&amp;xfbml=1"></script>';
+          }
+          $fb_js_sdk_is_included = TRUE;
+        }
+        $item['output'] = $output . $item['output'];
         $links[$item['plugin_info']['plugin']] = array(
           'title' => $item['output'],
           'html' => TRUE,
@@ -168,8 +188,8 @@ function theme_od_share_edit($form) {
     );
   }
   $headers = array(
-    t('Plugin name'), 
-    t('Weight'), 
+    t('Plugin name'),
+    t('Weight'),
     t('Description'),
     t('Options'),
     t('Enabled'),
@@ -253,7 +273,7 @@ function od_share_get_buttons($node, $raw = FALSE) {
   if ($raw) {
     return $items;
   }
-  
+
   if ($items) {
     $output = '<ul class="od_share">';
     foreach ($items as $item) {

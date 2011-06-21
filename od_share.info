@@ -2,5 +2,5 @@
 name = OD Share
 description = Custom select share button.
 core = 6.x
-version = 6.x-0.1
+version = 6.x-0.2
 package = Opendream
