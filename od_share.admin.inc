@@ -70,6 +70,9 @@ function od_share_ctypes() {
 function od_share_ctypes_submit($form, $form_state) {
   $ctypes = array_filter($form_state['values']['od_share_ctypes']);
   $use_path_alias_status = $form_state['values']['od_share_config']['use_path_alias'];
+  $saved_num = count($form['form_id']['#post']['od_share_ctypes']);
+
+  drupal_set_message($saved_num . ' '. t('content types') .' '. t('saved') . '.');
   variable_set('od_share_enabled', $ctypes);
   variable_set('od_share_use_path_alias', $use_path_alias_status);
 }
@@ -253,19 +256,26 @@ function od_share_facebook_app_settings() {
   $form['od_share_facebook_app_id'] = array(
     '#type' => 'textfield',
     '#default_value' => variable_get('od_share_facebook_app_id', 'undefined'),
-    '#description' => t('Description'),
+    '#description' => t('Facebook Application ID. ') .
+                        l(
+                           t('Get it here.'),
+                           'http://developers.facebook.com/docs/reference/plugins/like/',
+                           array('attributes' =>
+                             array('target' => '_blank')
+                           )
+                         ),
     '#title' => t('App Id'),
   );
   $form['od_share_facebook_like_fbml_width'] = array(
     '#type' => 'textfield',
     '#default_value' => variable_get('od_share_facebook_like_fbml_width', '450'),
-    '#description' => t('Description'),
+    '#description' => t('Width in px.'),
     '#title' => t('Box Width'),
   );
   $form['od_share_facebook_use_send_button'] = array(
     '#type' => 'checkbox',
     '#default_value' => variable_get('od_share_facebook_use_send_button', FALSE),
-    '#description' => t('Description'),
+    '#description' => t('Tick for show like and send button.'),
     '#title' => t('Use Send Button'),
   );
   $form['od_share_facebook_use_xfbml'] = array(

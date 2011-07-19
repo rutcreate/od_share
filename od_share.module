@@ -127,13 +127,21 @@ function od_share_link($type, $object, $teaser = FALSE) {
       $links = array();
       foreach ($items as $item) {
         $is_facebook = strpos($item['plugin_info']['plugin'], 'facebook_');
+        $output = "";
         if ($is_facebook !== false && $fb_js_sdk_is_included == FALSE) {
           $use_xfbml = variable_get('od_share_facebook_use_xfbml', TRUE);
           $app_id = variable_get('od_share_facebook_app_id', 'undefined');
-          if ($use_xfbml && $app_id != 'undefined') {
-            $output = '<div id="fb-root"></div><script src="http://connect.facebook.net/en_US/all.js#appId='.$app_id.'&amp;xfbml=1"></script>';
+          if ($app_id == 'undefined') {
+            drupal_set_message('facebook app_id for od_share is undefined. '. l(t('Settings'), 'admin/settings/od_share/facebookapp', array('query' => 'destination='.$_GET['q'])), 'warning');
           }
-          $fb_js_sdk_is_included = TRUE;
+          if ($use_xfbml) {
+            $app_id_str = '';
+            if ($app_id != 'undefined' && $app_id == '') {
+              $app_id_str = 'appId='.$app_id.'&amp';
+            }
+            $output = '<div id="fb-root"></div><script src="http://connect.facebook.net/en_US/all.js#'. $app_id_str .'xfbml=1"></script>';
+            $fb_js_sdk_is_included = TRUE;
+          }
         }
         $item['output'] = $output . $item['output'];
         $links[$item['plugin_info']['plugin']] = array(
@@ -304,7 +312,8 @@ function od_share_views_api() {
 function is_use_xfbml() {
   $use_xfbml = variable_get('od_share_facebook_use_xfbml', TRUE);
   $app_id = variable_get('od_share_facebook_app_id', 'undefined');
-  return ($use_xfbml && $app_id != 'undefined');
+
+  return ($use_xfbml);
 }
 
 /**
@@ -320,3 +329,4 @@ function url_to_use($url) {
 
   return $url;
 }
+
