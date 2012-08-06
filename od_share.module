@@ -53,15 +53,6 @@ function od_share_menu() {
     'file' => 'od_share.admin.inc',
     'weight' => 3,
   );
-  $items['admin/settings/od_share/facebookapp'] = array(
-    'title' => t('Facebook Application Settings'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('od_share_facebook_app_settings'),
-    'access arguments' => array('administer od_share'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'od_share.admin.inc',
-    'weight' => 4
-  );
   $items['admin/settings/od_share/%'] = array(
     'title' => t('Type'),
     'page callback' => 'drupal_get_form',
@@ -72,8 +63,8 @@ function od_share_menu() {
   );
   $items['admin/settings/od_share/%/remove'] = array(
     'title' => t('Confirm'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('od_share_remove_confirm', 3),
+    'page callback' => 'od_share_remove_confirm',
+    'page arguments' => array(3),
     'access arguments' => array('administer od_share'),
     'type' => MENU_CALLBACK,
     'file' => 'od_share.admin.inc',
@@ -99,9 +90,35 @@ function od_share_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   if (in_array($node->type, variable_get('od_share_enabled', array())) && variable_get('od_share_type_'. $node->type .'_position', 'link') == 'node') {
     // Node view.
     if ($op == 'view') {
-      $output = od_share_get_buttons($node);
+      $items = array();
+      // Get plugins for this node type.
+      $info = od_share_get_type_info($node->type);
+      foreach ($info as $plugin) {
+        // Skip if plugin is disabled.
+        if ($plugin['enabled'] == 0) continue;
+        $plugin_info = od_share_plugins_info($plugin['plugin']);
+        $vars = array(
+          'option' => $plugin['options'],
+          'url' => $GLOBALS['base_url'] .'/node/'. $node->nid,
+          'title' => $node->title,
+        );
+        $items[] = array(
+          'output' => $plugin_info['display callback']($vars),
+          'plugin_info' => $plugin_info,
+        );
+      }
+      
+      if ($items) {
+        $output = '<ul class="od_share">';
+        foreach ($items as $item) {
+          $output .= '<li class="'. $item['plugin_info']['plugin'] .'">';
+          $output .= $item['output'];
+          $output .= '</li>';
+        }
+        $output .= '</ul>';
+      }
+      
       if (!empty($output)) {
-        drupal_add_css(drupal_get_path('module', 'od_share') .'/css/od_share.css');
         $node->content['od_share'] = array(
           '#value' => $output,
           '#weight' => variable_get('od_share_type_'. $node->type .'_weight', '0'),
@@ -115,37 +132,27 @@ function od_share_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * Implementation of hook_links().
  */
 function od_share_link($type, $object, $teaser = FALSE) {
-  $fb_js_sdk_is_included = FALSE;
   // Check
   // 1. Is this content type enabled?
   // 2. If this content type is enabled, display position is link?
   if (in_array($object->type, variable_get('od_share_enabled', array())) && variable_get('od_share_type_'. $object->type .'_position', 'link') == 'link') {
     // Is node link and not a teaser.
     if ($type == 'node' && !$teaser) {
-      drupal_add_css(drupal_get_path('module', 'od_share') .'/css/od_share.css');
-      $items = od_share_get_buttons($object, TRUE);
       $links = array();
-      foreach ($items as $item) {
-        $is_facebook = strpos($item['plugin_info']['plugin'], 'facebook_');
-        $output = "";
-        if ($is_facebook !== false && $fb_js_sdk_is_included == FALSE) {
-          $use_xfbml = variable_get('od_share_facebook_use_xfbml', TRUE);
-          $app_id = variable_get('od_share_facebook_app_id', 'undefined');
-          if ($app_id == 'undefined') {
-            drupal_set_message('facebook app_id for od_share is undefined. '. l(t('Settings'), 'admin/settings/od_share/facebookapp', array('query' => 'destination='.$_GET['q'])), 'warning');
-          }
-          if ($use_xfbml) {
-            $app_id_str = '';
-            if ($app_id != 'undefined' && $app_id == '') {
-              $app_id_str = 'appId='.$app_id.'&amp';
-            }
-            $output = '<div id="fb-root"></div><script src="http://connect.facebook.net/en_US/all.js#'. $app_id_str .'xfbml=1"></script>';
-            $fb_js_sdk_is_included = TRUE;
-          }
-        }
-        $item['output'] = $output . $item['output'];
-        $links[$item['plugin_info']['plugin']] = array(
-          'title' => $item['output'],
+      // Get plugins for this node type.
+      $info = od_share_get_type_info($object->type);
+      foreach ($info as $plugin) {
+        // Skip if plugin is disabled.
+        if ($plugin['enabled'] == 0) continue;
+        $plugin_info = od_share_plugins_info($plugin['plugin']);
+        $vars = array(
+          'option' => $plugin['options'],
+          'url' => $GLOBALS['base_url'] .'/node/'. $object->nid,
+          'title' => $object->title,
+        );
+        $output = $plugin_info['display callback']($vars);
+        $links[$plugin['plugin']] = array(
+          'title' => $output,
           'html' => TRUE,
         );
       }
@@ -175,7 +182,6 @@ function theme_od_share_edit($form) {
     $row[] = drupal_render($form['od_share'][$key]['name']) . drupal_render($form['od_share'][$key]['plugin']);
     $form['od_share'][$key]['weight']['#attributes']['class'] = 'plugins-weight';
     $row[] = drupal_render($form['od_share'][$key]['weight']);
-    $row[] = drupal_render($form['od_share'][$key]['description']);
     $row[] = drupal_render($form['od_share'][$key]['options']);
     $row[] = drupal_render($form['od_share'][$key]['enabled']);
     $class = 'draggable';
@@ -196,9 +202,8 @@ function theme_od_share_edit($form) {
     );
   }
   $headers = array(
-    t('Plugin name'),
-    t('Weight'),
-    t('Description'),
+    t('Plugin name'), 
+    t('Weight'), 
     t('Options'),
     t('Enabled'),
   );
@@ -206,13 +211,6 @@ function theme_od_share_edit($form) {
   $output .= drupal_render($form);
   drupal_add_tabledrag('plugins-edit-table', 'order', 'self', 'plugins-weight');
   return $output;
-}
-
-/**
- * Template preprocess node.
- */
-function od_share_preprocess_node(&$variables) {
-  $variables['od_share'] = od_share_get_buttons($variables['node']);
 }
 
 /**
@@ -256,77 +254,3 @@ function od_share_plugins_info($plugin) {
 function od_share_get_type_info($type) {
   return variable_get('od_share_type_'.$type, array());
 }
-
-/**
- * Get share buttons.
- */
-function od_share_get_buttons($node, $raw = FALSE) {
-  $items = array();
-  $info = od_share_get_type_info($node->type);
-  foreach ($info as $plugin) {
-    // Skip if plugin is disabled.
-    if ($plugin['enabled'] == 0) continue;
-    $plugin_info = od_share_plugins_info($plugin['plugin']);
-    $vars = array(
-      'option' => $plugin['options'],
-      'url' => $GLOBALS['base_url'] .'/node/'. $node->nid,
-      'title' => $node->title,
-    );
-    $items[] = array(
-      'output' => $plugin_info['display callback']($vars),
-      'plugin_info' => $plugin_info,
-    );
-  }
-
-  if ($raw) {
-    return $items;
-  }
-
-  if ($items) {
-    $output = '<ul class="od_share">';
-    foreach ($items as $item) {
-      $output .= '<li class="'. $item['plugin_info']['plugin'] .'">';
-      $output .= $item['output'];
-      $output .= '</li>';
-    }
-    $output .= '</ul>';
-  }
-
-  return $output;
-}
-
-/**
- * Implementation of hook_views_api().
- */
-function od_share_views_api() {
-  return array(
-    'api' => 2,
-    'path' => drupal_get_path('module', 'od_share') .'/views',
-  );
-}
-
-
-/**
-  * Helper functions.
-  */
-function is_use_xfbml() {
-  $use_xfbml = variable_get('od_share_facebook_use_xfbml', TRUE);
-  $app_id = variable_get('od_share_facebook_app_id', 'undefined');
-
-  return ($use_xfbml);
-}
-
-/**
-  * Helper functions.
-  */
-function url_to_use($url) {
-  $use_path_alias = variable_get('od_share_use_path_alias', FALSE);
-
-  if ($use_path_alias) {
-    $path_alias = drupal_get_path_alias($_GET['q']);
-    $url = url($path_alias, array('absolute' => TRUE));
-  }
-
-  return $url;
-}
-
