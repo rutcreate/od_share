@@ -18,7 +18,8 @@ function od_share_facebookiframe_display($vars) {
   foreach ($vars as $key => $value) {
     $$key = $value;
   }
-  $output = '<iframe id="gs_fb_sh" name="gs_fb_sh" scrolling="no" style="border: none; overflow: hidden; height: 59px; width: 54px; " class="fb_ltr " src="https://www.facebook.com/plugins/share_button.php?channel=http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D9%23cb%3Df361332028%26relation%3Dparent.parent&href='.  str_replace(':', '%3A', url($_GET['q'], array('absolute' => true))) .'&locale=th_TH&sdk=joey&type='.$option .'" frameborder="0"></iframe>';
+  $alias_url  = str_replace(':', '%3A', url($_GET['q'], array('absolute' => true)));
+  $output = '<iframe id="gs_fb_sh" name="gs_fb_sh" scrolling="no" style="border: none; overflow: hidden; height: 59px; width: 54px; " class="fb_ltr " src="https://www.facebook.com/plugins/share_button.php?channel=http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D9%23cb%3Df361332028%26relation%3Dparent.parent&href='. $alias_url  .'&locale=th_TH&sdk=joey&type='.$option .'" frameborder="0"></iframe>';
   return $output;
 }
 
