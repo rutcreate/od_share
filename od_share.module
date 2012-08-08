@@ -77,6 +77,15 @@ function od_share_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'od_share.admin.inc',
   );
+  $items['admin/settings/od_share/facebookapp'] = array(
+    'title' => t('Facebook Application Settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('od_share_facebook_app_settings'),
+    'access arguments' => array('administer od_share'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'od_share.admin.inc',
+    'weight' => 4
+  );
   return $items;
 }
 

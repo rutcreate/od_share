@@ -180,13 +180,46 @@ function od_share_edit_submit($form, $form_state) {
 }
 
 
+/**
+ * Facebook Application Settings.
+ */
 
-
-
-
-
-
-
+function od_share_facebook_app_settings() {
+  $form['od_share_facebook_app_id'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('od_share_facebook_app_id', 'undefined'),
+    '#description' => t('Facebook Application ID. ') .
+                        l(
+                           t('Get it here.'),
+                           'http://developers.facebook.com/docs/reference/plugins/like/',
+                           array('attributes' =>
+                             array('target' => '_blank')
+                           )
+                         ),
+    '#title' => t('App Id'),
+  );
+  $form['od_share_facebook_like_fbml_width'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('od_share_facebook_like_fbml_width', '450'),
+    '#description' => t('Width in px.'),
+    '#title' => t('Box Width'),
+  );
+  /*
+  $form['od_share_facebook_use_send_button'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('od_share_facebook_use_send_button', FALSE),
+    '#description' => t('Tick for show like and send button.'),
+    '#title' => t('Use Send Button'),
+  );
+  $form['od_share_facebook_use_xfbml'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('od_share_facebook_use_xfbml', TRUE),
+    '#description' => t('Description'),
+    '#title' => t('Use FBML'),
+  );
+  */
+  return system_settings_form($form);
+}
 
 
 
