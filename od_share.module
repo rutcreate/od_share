@@ -9,6 +9,9 @@ function od_share_perm() {
   );
 }
 
+function od_share_init(){
+  drupal_add_css(drupal_get_path('module', 'od_share') .'/css/od_share.css');
+}
 /**
  * Implementation of hook_menu().
  */
